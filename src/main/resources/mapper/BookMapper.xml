@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.java.book.mapper.BookMapper">
+
+    <!--查询出图书分类比例-->
+    <select id="getCategoryRatio" resultType="com.java.book.entity.Book">
+
+        select
+            c.name categoryName, fk_categoryId, count(fk_categoryId) categoryNumber
+        from
+            sys_book b
+        LEFT JOIN sys_category c on b.fk_categoryId = c.id
+        GROUP BY
+            fk_categoryId
+    </select>
+</mapper>

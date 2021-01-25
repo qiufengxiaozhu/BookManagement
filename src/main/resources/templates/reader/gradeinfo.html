@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>年级信息</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--查询条件开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>查询条件</legend>
+</fieldset>
+
+<blockquote class="layui-elem-quote">
+    <!--条件查询表单-->
+    <form class="layui-form layui-form-pane" action="" method="post" id="searchForm" lay-filter="searchForm">
+        <div class="layui-row layui-col-space1">
+            <div class="layui-col-md3">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" for="grade">年级</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="grade" id="grade" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md3">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                            <i class="layui-icon layui-icon-search"></i>
+                            搜索
+                        </button>
+                        <button type="reset" class="layui-btn layui-btn-primary">
+                            <i class="layui-icon layui-icon-refresh-1"></i>
+                            重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</blockquote>
+<!--查询条件结束-->
+
+<!--查询列表开始-->
+<div>
+    <table class="layui-hide" id="gradeTable" lay-filter="gradeTable"></table>
+
+    <div id="toolbar" style="display: none;">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-md layui-icon layui-icon-form" lay-event="getCheckData"> 获取选中行数据</button>
+            <button class="layui-btn layui-btn-md layui-btn-normal" lay-event="getCheckLength">
+                <img src="/resources/images/number_icon.svg" alt="选中数目"> 获取选中数目
+            </button>
+            <button class="layui-btn layui-btn-md layui-btn-warm layui-icon layui-icon-survey" lay-event="isAll"> 验证是否全选</button>
+            <button class="layui-btn layui-btn-md" style="background-color: #07C462" lay-event="add">
+                <img src="/resources/images/addOne_icon.svg" alt="新增年级"> 新增年级
+            </button>
+            <button class="layui-btn layui-btn-md layui-btn-danger" lay-event="batchDelete">
+                <img src="/resources/images/batchDelete_icon.svg" alt="批量删除"> 批量删除
+            </button>
+        </div>
+    </div>
+
+    <div id="actionbar" style="display: none;">
+        <a class="layui-btn layui-btn-sm layui-icon layui-icon-edit" lay-event="edit"> 编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-sm layui-icon layui-icon-delete" lay-event="del"> 删除</a>
+    </div>
+</div>
+<!--查询列表结束-->
+
+<!-- 添加和修改的弹出层开始 -->
+<div style="display: none; padding: 5px" id="addOrUpdateLayer">
+    <form action="" method="post" class="layui-form layui-form-pane" id="addOrUpdateForm" lay-filter="dataFrm">
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="gradeName">年级</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="id">
+                <input type="text" name="grade" id="gradeName" lay-verify="required" autocomplete="off" placeholder="请输入年级名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" >
+            <div class="layui-input-block" style="text-align: center;">
+                <button type="button" class="layui-btn" lay-submit="" id="doSubmit">
+                    <span class="layui-icon layui-icon-ok"></span> 提交
+                </button>
+                <button type="reset" class="layui-btn layui-btn-warm" id="doReset">
+                    <span class="layui-icon layui-icon-refresh-1"></span> 重置
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- 添加和修改的弹出层结束 -->
+
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'table'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var table = layui.table;
+
+        // 定义新增及修改的弹出层索引
+        var addOrUpdateLayerIndex;
+        // 定义新增及编辑的url
+        var url;
+
+        // 初始化年级表单数据
+        var gradeTable = table.render({
+            elem: '#gradeTable'
+            , url: '/grade/getPageGrade'
+            , toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+            , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                title: '提示'
+                , layEvent: 'LAYTABLE_TIPS'
+                , icon: 'layui-icon-tips'
+            }]
+            , page: true  // 分页
+            , request: {
+                pageName: 'pageNum'         //页码的参数名称，默认：page
+                , limitName: 'pageSize'     //每页数据量的参数名，默认：limit
+            }
+            , response: {
+                statusName: 'code'          //规定数据状态的字段名称，默认：code
+                , statusCode: 200           //规定成功的状态码，默认：0
+                , countName: 'total'        //规定数据总数的字段名称，默认：count
+                , dataName: 'list'          //规定数据列表的字段名称，默认：data
+            }
+            , height: 'full-160'
+            , title: '年级信息表'
+            , cols: [ [
+                {type: 'checkbox', fixed: 'left'}
+                , {type: 'numbers', title: '序号', fixed: 'left'}
+                , {field: 'grade', title: '年级', width: '30%', align: 'center'}
+                , {field: 'createTime', title: '创建时间', width: '25%'}
+                , {field: 'updateTime', title: '修改时间', width: '25%', sort: true}
+                , {fixed: 'right', title: '操作', toolbar: '#actionbar', width: '200'}
+            ] ]
+            ,done: function(res, curr, count){ // 处理删除某一页最后一条数据的BUG
+                if(res.list.length === 0 && curr !== 1){
+                    gradeTable.reload({
+                        page:{
+                            curr:(curr-1)
+                        }
+                    });
+                }
+            }
+        });
+
+        //模糊查询
+        form.on("submit(doSearch)",function(data){
+            gradeTable.reload({
+                where:data.field,
+                page:{
+                    curr:1
+                }
+            });
+            return false;
+        });
+
+        //监听头部工具栏事件
+        table.on('toolbar(gradeTable)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+                // 自定义头工具栏右侧图标 - 提示
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+                // 新增
+                case 'add':
+                    addGrade();
+                    break;
+                // 批量删除
+                case 'batchDelete':
+                    var data = obj.data; //获得当前行数据
+                    batchDelete(data);
+                    break;
+            }
+        });
+
+        //监听行工具事件
+        table.on('tool(gradeTable)', function(obj){
+            var data = obj.data;
+            switch (obj.event) {
+                case 'edit':
+                    editGrade(data);
+                    break;
+                case 'del':
+                    deleteGrade(data);
+                    break;
+            }
+        });
+
+        // 批量删除
+        function batchDelete(data) {
+            //得到选中行
+            var checkStatus = table.checkStatus('gradeTable');
+            var dataLength = checkStatus.data.length;
+            if (dataLength > 0) {
+                layer.confirm('你确定要删除这些数据吗?', {icon: 3, title: '提示'}, function (index) {
+                    var data = checkStatus.data; //获取选中行的数据
+                    var ids = "";
+                    $.each(data, function (index, item) {
+                        if (index === 0) {
+                            ids += "ids=" + item.id;
+                        } else {
+                            ids += "&ids=" + item.id;
+                        }
+                    })
+                    $.post("/grade/batchDeleteGrade", ids, function (res) {
+                        console.log("批量删除返回数据: ", res)
+                        if (res.code === 200) {
+                            gradeTable.reload();
+                        }
+                        layer.msg(res.msg);
+                    })
+                    layer.close(index);
+                });
+
+            } else {
+                layer.msg("请选中操作行")
+            }
+        }
+
+        // 单个删除
+        function deleteGrade(data) {
+            layer.confirm('你确定要删除这条数据吗? [' + JSON.stringify(data.loginname) + ']', {icon: 3, title: '提示'}, function (index) {
+                $.post("/grade/deleteGrade", {id: data.id}, function (res) {
+                    if (res.code === 200) {
+                        gradeTable.reload();
+                    }
+                    layer.msg(res.msg);
+                })
+                layer.close(index);
+            });
+        }
+
+        // 新增
+        function addGrade() {
+            addOrUpdateLayerIndex = layer.open({
+                type: 1,
+                content: $('#addOrUpdateLayer'),
+                area: ['680px', '88%'],
+                title: ['📝 新增年级', 'font-size:18px; color:#07c462'],
+                success: function () {
+                    $("#addOrUpdateForm")[0].reset();
+
+                    url = "/grade/addGrade";
+                }
+            });
+        }
+
+        // 编辑
+        function editGrade(data) {
+            addOrUpdateLayerIndex = layer.open({
+                type: 1,
+                content: $("#addOrUpdateLayer"),
+                area: ['680px', '88%'],
+                title: ['📝 修改年级', 'font-size:18px; color:#07c462'],
+                success: function () {
+                    $("#addOrUpdateForm")[0].reset();
+
+                    // 装载新的数据
+                    form.val("dataFrm", data);
+                    console.log("装载数据：", data);
+                    url = "/grade/updateGrade";
+                }
+            });
+
+        }
+
+        // 新增、修改年级弹出层提交事件
+        $("#doSubmit").click(function () {
+
+            // 序列化表单内容
+            var data = $("#addOrUpdateForm").serialize();
+            console.log("新增、修改弹出层的序列化数据：", data);
+
+            $.post(url, data, function (res) {
+                if (res.code === 200) {
+                    gradeTable.reload();
+                    layer.msg(res.msg);
+                    layer.close(addOrUpdateLayerIndex);
+                } else {
+                    if (res.msg !== "异常!") {
+                        layer.msg(res.msg);
+                    }
+                }
+            })
+        })
+
+    });
+</script>
+</body>
+</html>

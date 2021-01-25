@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>读者信息</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<form class="layui-form">
+    <blockquote class="layui-elem-quote news_search">
+        <div class="layui-inline" style="font-weight: bold; font-size: medium;">
+            查询条件：
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label" for="loginname">登录名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="loginname" id="loginname" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label" for="name">真实姓名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="name" id="name" autocomplete="off" class="layui-input">
+            </div>
+        </div>&nbsp;
+        <div class="layui-inline">
+            <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                <i class="layui-icon layui-icon-search"></i>
+                搜索
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary">
+                <i class="layui-icon layui-icon-refresh-1"></i>
+                重置
+            </button>
+        </div>
+
+    </blockquote>
+    <ul class="layer-photos-demo" id="Images"></ul>
+</form>
+
+<!-- 添加和修改的弹出层开始 -->
+<div style="display: none; padding: 5px" id="addOrUpdateLayer">
+    <form action="" method="post" class="layui-form layui-form-pane" id="addOrUpdateForm" lay-filter="dataFrm">
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="name2">真实姓名：</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="id" id="userid">
+                <input type="text" name="name" id="name2" lay-verify="required" autocomplete="off" placeholder="请输入真实姓名" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="loginname2">登录名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="loginname" id="loginname2" required lay-verify="required" placeholder="请输入登录名" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" for="uploadImage">读者头像</label>
+                <div class="layui-input-block">
+                    <div class="layui-upload">
+                        <button type="button" class="layui-btn layui-icon layui-icon-upload-drag" id="uploadImage"> 上传头像</button>
+                        <div class="layui-upload-list">
+                            <input type="hidden" name="src" id="imageSrc">
+                            <img class="layui-upload-img" id="preImage" alt="" src="" style="max-width: 200px; max-height: 120px;">
+                            <p id="imageText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item" pane="">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="sex" value="0" title="男" checked="">
+                <input type="radio" name="sex" value="1" title="女">
+            </div>
+        </div>
+        <div class="layui-form-item" pane="">
+            <label class="layui-form-label">角色</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="type" value="0" title="管理员" >
+                <input type="radio" name="type" value="1" title="普通用户" checked="">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="tel">手机号码</label>
+            <div class="layui-input-block">
+                <input type="tel" name="tel" id="tel" placeholder="请输入手机号码" lay-verify="phone" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="grade">年级</label>
+            <div class="layui-input-block">
+                <select name="fkGradeid" id="grade" lay-verify="required" lay-search>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="major">专业</label>
+            <div class="layui-input-block">
+                <select name="fkMajorid" id="major" lay-verify="required" lay-search>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item" >
+            <div class="layui-input-block" style="text-align: center;">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="updUser" id="doSubmit">
+                    <span class="layui-icon layui-icon-ok"></span> 提交
+                </button>
+                <button type="reset" class="layui-btn layui-btn-warm" id="doReset">
+                    <span class="layui-icon layui-icon-refresh-1"></span> 重置
+                </button>
+                <button type="button" class="layui-btn layui-btn-danger" id="resetPwd">
+                    <span class="layui-icon layui-icon-key"></span> 重置密码
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- 添加和修改的弹出层结束 -->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'table', 'upload', 'flow'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var table = layui.table;
+        var upload = layui.upload;
+        var flow = layui.flow;
+
+        // 定义新增及修改的弹出层索引
+        var addOrUpdateLayerIndex;
+        // 定义新增及编辑的url
+        var url;
+
+        // 初始化流加载
+        flowload();
+
+        // 将字符串转化为json对象
+        $.extend({
+            /* 解析为JSON */
+            "parseJSON":function (str) {
+                var strArr=str.split("&");
+                var searchJSON={};
+                $.each(strArr,function (index,item) {
+                    var item=item.split("=");
+                    searchJSON[item[0]]=decodeURIComponent(item[1]);
+                });
+                return searchJSON;
+            }
+        });
+
+        // 获取专业分类的值
+        $.ajax({
+            url: '/major/getPageMajor?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function(data) {
+                // console.log(data.list);
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    opt += '<option value = "' + value[i].id + '">' + value[i].major + '</option>'
+                }
+                $("#major").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 获取年级的值
+        $.ajax({
+            url: '/grade/getPageGrade?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function(data) {
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    opt += '<option value = "' + value[i].id + '">' + value[i].grade + '</option>'
+                }
+                $("#grade").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 读者头像上传
+        var uploadInst = upload.render({
+            elem: '#uploadImage'
+            ,url: '/upload/uploadImage' //改成您自己的上传接口
+            ,size: 50 * 1024 //限制文件大小，单位 KB  50M
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    // console.log("result", result)
+                    $('#preImage').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                //如果上传失败
+                if(res.code !== 0){
+                    return layer.msg(res.msg);
+                }
+                //上传成功
+                layer.msg(res.msg);
+                console.log("路径：", res.data.src);
+                $("#imageSrc").val(res.data.src);   // 书籍封面路径
+            }
+            ,error: function(){
+                //演示失败状态，并实现重传
+                var imageText = $('#imageText');
+                imageText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs image-reload">重试</a>');
+                imageText.find('.image-reload').on('click', function(){
+                    uploadInst.upload();
+                });
+            }
+        });
+
+        //模糊查询
+        form.on("submit(doSearch)",function(data){
+            // 重置流加载内容
+            $("#Images").html("");
+            // 调用流加载，并传参
+            flowload(data.field);
+            return false;
+        });
+
+        //流加载图片
+        function flowload(data) {
+            flow.load({
+                elem: '#Images' //流加载容器
+                , isAuto: false
+                , isLazyimg: true
+                , done: function (page, next) { //加载下一页
+                    var info = {pageNum: page, pageSize: 10};
+                    // 浅拷贝
+                    $.extend(info, data);
+                    $.get("/user/getPageUser", info, function (res) {
+                        //模拟插入
+                        var imgList = [], data = res.data;
+                        setTimeout(function () {
+                            layui.each(res.list, function (index, item) {
+                                console.log("list",item);
+                                var loginname = "", name = "";
+                                if (item.loginname.length > 10) {
+                                    loginname = item.loginname.substring(0, 10)+"... ";
+                                } else {
+                                    loginname = item.loginname;
+                                }
+                                if (item.name.length > 3) {
+                                    name = item.name.substring(0, 3)+"... ";
+                                } else {
+                                    name = item.name;
+                                }
+                                imgList.push('<li>' +
+                                    '           <div class="layui-badge">'+(index+1)+'</div>' +
+                                    '           <img class="headphoto" src="' + item.src + '" alt="" style="margin-top: -30px;">' +
+                                    '           <div class="operate">' +
+                                    '               <div class="check">' +
+                                    '                   <span class="userinfo" title=" 姓名：'+item.name+'，登录名：'+item.loginname+'，电话：'+item.tel+'">' +
+                                    '                       🆔:' + name + ' - ' + loginname +
+                                    '                   </span>' +
+                                    '               </div>' +
+                                    '               <div class="" style="float: left; margin-top: 10px; margin-left: 0px;">' +
+                                    '                   <input type="hidden" name="user" value="'+ $.param(item) +'">' +
+                                    '                   <button type="button" class="layui-icon layui-icon-edit" id="edit" title="修改" style="color: #1E9FFF; cursor:pointer; "> </button>' +
+                                    '                   <button type="button" class="layui-icon layui-icon-delete" id="del" title="删除" style="color: #ff5722; cursor:pointer;"> </button>' +
+                                    '               </div>' +
+                                    '           </div>' +
+                                    '         </li>'
+                                );
+                            });
+                            next(imgList.join(''), page < res.pages); //假设总页数为 10
+                            //设置图片的高度
+                            $("#Images li img").height($("#Images li img").width());
+                        }, 500);
+                    });
+                }
+            });
+
+        }
+
+        //设置图片的高度
+        $(window).resize(function(){
+            $("#Images li img").height($("#Images li img").width());
+        })
+
+        //修改单个学生信息
+        $("body").on("click","#edit",function(){
+            var _this = $(this);
+            layer.confirm('确定修改读者 【"'+_this.parent().siblings().find("span").html()+'"】吗？',{icon:3, title:'提示信息'},function(index){
+
+                var userInfo = $.parseJSON(_this.siblings().val());
+                console.log("读者信息：", userInfo);
+
+                addOrUpdateLayerIndex = layer.open({
+                    type: 1,
+                    content: $("#addOrUpdateLayer"),
+                    area: ['680px', '88%'],
+                    title: ['📝 修改读者信息', 'font-size:18px; color:#07c462'],
+                    success: function () {
+                        $("#addOrUpdateForm")[0].reset();
+
+                        // 装载新的数据
+                        form.val("dataFrm", userInfo);
+                        // 给图书封面赋值
+                        $("#preImage").attr("src",userInfo.src);
+                        url = "/user/updateUser";
+                    }
+                });
+
+                layer.close(index);
+            });
+        });
+
+        // 修改读者信息弹出层提交事件
+        form.on('submit(updUser)',function () {
+
+            // 序列化表单内容
+            var data = $("#addOrUpdateForm").serialize();
+            console.log("修改弹出层的序列化数据：", data);
+
+            layer.confirm('你确定要提交修改后的学生信息吗?', {icon: 3, title: '提示'}, function (index) {
+                // 判断是否可以提交
+                var success = false;
+
+                // 判断用户名是否重复
+                $.ajax({
+                    type: "get",
+                    url: "/user/checkLoginame?" + data,
+                    datatype: "json",
+                    async: false,
+                    success: function (response) {
+                        if (response.code !== 200) {
+                            layer.alert(response.msg, {
+                                icon: 5,
+                                title: "提示"
+                            });
+                            success = true;
+                        }
+                    }
+                });
+                if (success) {
+                    return false;
+                }
+
+                // 判断手机号是否重复
+                $.ajax({
+                    type: "get",
+                    url: "/user/checkTel?" + data,
+                    datatype: "json",
+                    async: false,
+                    success: function (response) {
+                        if (response.code !== 200) {
+                            layer.alert(response.msg, {
+                                icon: 5,
+                                title: "提示"
+                            });
+                            success = true;
+                        }
+                    }
+                });
+                if (success) {
+                    return false;
+                }
+
+                // 提交
+                $.post(url, data, function (res) {
+                    if (res.code === 200) {
+                        // 重置流加载内容
+                        $("#Images").html("");
+                        // 调用流加载
+                        flowload();
+                        layer.msg(res.msg);
+                        layer.close(addOrUpdateLayerIndex);
+                    } else {
+                        if (res.msg !== "异常!") {
+                            layer.msg(res.msg);
+                        }
+                    }
+                })
+            });
+        });
+
+        // 重置表单内容
+        $("#doReset").click(function () {
+            $("#preImage").attr("src","");
+        })
+
+        // 重置学生密码
+        $("#resetPwd").click(function () {
+            layer.confirm('你确定要重置该学生的密码吗?', {icon: 3, title: '提示'}, function (index) {
+                // 用户id
+                var userid = $("#userid").val();
+                // 重置用户密码
+                $.post('/user/resetPwd', {"id": userid}, function (res) {
+                    layer.msg(res.msg);
+                })
+            });
+        })
+
+        //删除单个学生信息
+        $("body").on("click","#del",function(){
+            var _this = $(this);
+            layer.confirm('确定删除读者 【"'+_this.parent().siblings().find("span").html()+'"】吗？',{icon:3, title:'提示信息'},function(index){
+
+                $.post("/user/deleteUser", _this.siblings().val(), function (res) {
+                    if (res.code === 200) {
+                        // 重置流加载内容
+                        $("#Images").html("");
+                        // 调用流加载
+                        flowload();
+                    }
+                    layer.msg(res.msg);
+                })
+                layer.close(index);
+            });
+        });
+
+
+    });
+</script>
+</body>
+</html>

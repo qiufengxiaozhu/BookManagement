@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:form="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>在线书架</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/cate.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--查询条件开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>查询条件</legend>
+</fieldset>
+
+<blockquote class="layui-elem-quote">
+    <!--条件查询表单-->
+    <form class="layui-form layui-form-pane" action="" method="post" id="searchForm" lay-filter="searchForm">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" for="booknum">图书序列号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="booknum" id="booknum" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="name">图书名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="name" id="name" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="author">图书作者</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="author" id="author" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+<!--            <div class="layui-inline">-->
+<!--                <label class="layui-form-label" for="putawayStatus">上架状态</label>-->
+<!--                <div class="layui-input-inline">-->
+<!--                    <select name="putaway" id="putawayStatus" lay-search>-->
+<!--                        <option value="" selected>未选择</option>-->
+<!--                        <option value="0" >未上架</option>-->
+<!--                        <option value="1" >已上架</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+<!--            </div>-->
+            <div class="layui-inline">
+                <label class="layui-form-label" for="category">图书分类</label>
+                <div class="layui-input-inline">
+                    <select name="fkCategoryid" id="category" lay-search>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="publisher">出版社</label>
+                <div class="layui-input-inline">
+                    <select name="fkPublisherid" id="publisher" lay-search>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="startTime">出版开始日</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="startTime" id="startTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="endTime">出版结束日</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endTime" id="endTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </div>
+        <!--查询表单按钮-->
+        <div class="layui-row layui-col-space1">
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="grid-demo grid-demo-bg1">
+                    <div class="layui-form-item" style="">
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                                <i class="layui-icon layui-icon-search"></i>
+                                搜索
+                            </button>
+                            <button type="reset" class="layui-btn layui-btn-primary">
+                                <i class="layui-icon layui-icon-refresh-1"></i>
+                                重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+        </div>
+    </form>
+</blockquote>
+<!--查询条件结束-->
+
+<!--在线书架 开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>在线书架</legend>
+</fieldset>
+
+<div class="mainmenu">
+    <img src="/resources/images/5_top.jpg" height="8" class="bottom" alt=""/>
+    <div id="bookRack"></div>
+</div>
+<!--在线书架 结束-->
+
+<!-- 添加和修改的弹出层开始 -->
+<div style="display: none; padding: 5px" id="addOrUpdateLayer">
+    <form action="" method="post" class="layui-form layui-form-pane" id="addOrUpdateForm" lay-filter="dataFrm">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="expectTime">还书时间</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="booknum" id="booknum2">
+                <input type="text" name="expectTime" id="expectTime" readonly lay-verify="required" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="content">借阅公告</label>
+            <div class="layui-input-block">
+                <form:textarea class="layui-textarea" id="content" htmlEscape="true" readonly>
+                    亲爱的同学：<br>
+                        &emsp;&emsp;大家好！<br>
+                        &emsp;&emsp;很高兴同学能够积极参与到课外阅读中提升自己的视野，我们也积极配合同学们的阅读借阅工作。
+                        但是还请注意，由于本图书馆的图书属于<span style="color: #01AAED">公共资源</span>，还请各位同学借阅之后好好保管，以便其他的同学们进行借阅。
+                    另外，还请注意自己填写的借阅归还时间，逾时未归还是会扣除一定的<span style="color: #ff6700">押金</span>，并影响信誉的哦！<br>
+                        &emsp;&emsp;祝大家博学之，审问之，慎思之，明辨之，笃行之。<br>
+                        <hr class="layui-bg-blue">
+                    <b>规定：</b><br>
+                    &emsp;&emsp;1、借阅归还时间范围为<span style="color: #01AAED">借阅书籍的第二天开始至下个月的今天截止</span>。<br>
+                    &emsp;&emsp;2、逾时一天未归还将扣除您的押金，<span style="color: #ff6700">每天扣除0.2元，依次累加</span>，直至归还。<br>
+                </form:textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-blocklayer-footer" style="text-align: center; float: bottom; ">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="addBorrow" id="doSubmit">
+                    <span class="layui-icon layui-icon-ok"></span> 确定
+                </button>
+                <button type="reset" class="layui-btn layui-btn-warm" id="doReset">
+                    <span class="layui-icon layui-icon-refresh-1"></span> 重置
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- 添加和修改的弹出层结束 -->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'upload', 'laydate', 'flow'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var upload = layui.upload;
+        var laydate = layui.laydate;
+        var flow = layui.flow;
+
+        // 定义图书借阅的弹出层
+        var addOrUpdateLayerIndex;
+
+        // 定义还书截止日
+        var dateTime = new Date();
+
+        // 将字符串转化为json对象
+        $.extend({
+            /* 解析为JSON */
+            "parseJSON": function (str) {
+                var strArr = str.split("&");
+                var searchJSON = {};
+                $.each(strArr, function (index, item) {
+                    var newItem = item.split("=");
+                    searchJSON[newItem[0]] = decodeURIComponent(newItem[1]);
+                });
+                return searchJSON;
+            }
+        });
+
+        // 初始化开始时间选择器
+        var startTime = laydate.render({
+            elem: '#startTime',
+            type: 'datetime',
+            theme: '#4d99cf',
+            istoday: true,
+            done: function (value, date) {
+                date.month = date.month !== 1 ? date.month - 1 : (date.year--, 12);// 月份修正,逗号表达式，两边都执行，返回第二个表达式
+                endTime.config.min = date;      // 开始日选好后，重置结束日的最小日期
+                endTime.config.value = value;   // 将结束日的初始值设定为开始日
+                $("#endTime").val(value);       // 给结束时间赋值
+            }
+        });
+
+        // 初始化结束时间选择器
+        var endTime = laydate.render({
+            elem: '#endTime',
+            type: 'datetime',
+            max: '2099-06-16 23:59:59',
+            istoday: true,
+            theme: '#4d99cf',
+            done: function (value, date) {
+                console.log(endTime);
+                // 如果结束时间小于开始时间，就让开始时间=结束时间
+                var start = $("#startTime"), end = $("#endTime");
+                if (start.val() > end.val()) {
+                    start.val(end.val());
+                }
+            }
+        });
+
+        // 初始化预期还书时间选择器
+        laydate.render({
+            elem: '#expectTime',
+            type: 'date',
+            range: true,
+            istoday: true,
+            min: dateTime.setDate(dateTime.getDate() + 1),
+            max: dateTime.setMonth(dateTime.getMonth() + 1),
+            theme: '#4d99cf'
+        });
+
+        // 获取书籍分类的值
+        $.ajax({
+            url: '/category/getPageCategory?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                // console.log(data.list);
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    if (value.hasOwnProperty(i)) {
+                        opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                    }
+                }
+                $("#category").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 获取出版社的值
+        $.ajax({
+            url: '/publisher/getPagePublisher?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    if (value.hasOwnProperty(i)) {
+                        opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                    }
+                }
+                $("#publisher").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 初始化流加载
+        flowload();
+
+        //模糊查询
+        form.on("submit(doSearch)",function(data){
+            // 重置流加载内容
+            $("#bookRack").html("");
+            // 调用流加载，并传参
+            flowload(data.field);
+            return false;
+        });
+
+        // 流加载
+        function flowload(data) {
+            flow.load({
+                elem: '#bookRack' //流加载容器
+                , isAuto: false
+                , isLazyimg: true
+                , done: function (page, next) { //加载下一页
+                    //模拟插入
+                    setTimeout(function () {
+                        var lis = [];
+                        var info = { pageNum: page, pageSize: 3, putaway: 1 };
+                        // 浅拷贝
+                        $.extend(info, data);
+                        console.log("info:", info);
+                        $.get('/book/getPageBook', info, function (res) {
+                            lis.push('<ul id="grid" class="group">');
+                            layui.each(res.list, function (index, item) {
+
+                                //执行下一页渲染，第二参数为：满足“加载更多”的条件，即后面仍有分页
+                                //流加载插入内容部分，根据自己需求更改，这里做的案例，所以就写的比较简单
+                                lis.push('<li>' +
+                                    '       <a onclick="readBook(\''+ $.param(item) +'\'); return false;" href="#">' +
+                                    '           <img src="'+item.src+'" alt="'+item.alt+'" style="box-shadow: 2px 2px 14px 4px rgba(0, 0, 0, 0.35);"/>' +
+                                    '           <p style="margin-top:2px; font-weight: bold; color: #FD482C">【 '+item.name+' 】</p>' +
+                                    '       </a>' +
+                                    '     </li>'
+                                );
+                            });
+                            lis.push('</ul><img src="/resources/images/5_gc.jpg" height="19" class="gc" alt=""/>');
+                            //total为Ajax返回的总页数，只有当前页小于总页数的情况下，才会继续出现加载更多
+                            next(lis.join(''), page < res.pages); //假设总页数为 10
+                            // 定义书架上的书
+                            var book_image = $(".mainmenu li a img");
+                            //设置图片的高度
+                            book_image.height(Number(book_image.width()) * 1.3);
+                        })
+                    }, 500);
+                }
+            });
+        }
+
+        //设置图片的高度
+        $(window).resize(function(){
+            // 定义书架上的书
+            var book_image = $(".mainmenu li a img");
+            book_image.height(Number(book_image.width()) * 1.3);
+        })
+
+        // 书籍阅读 事件
+        readBook = function (data) {
+            console.log("书籍信息：", data);
+            console.log("书籍信息：", $.parseJSON(data));
+            var bookinfo = $.parseJSON(data);
+            layer.open({
+                type: 2,    // iframe层-父子操作
+                // title:['📜 在线阅读', 'font-size:18px; color:#07c462'],
+                area: ['70%', '85%'],
+                fixed: false, // 不固定
+                maxmin: true,
+                resize: true, // 允许拖拽大小
+                content: '/sys/toOnlineReading', // 需要跳转的地址，或者是静态文件
+                btn: ['<i class="layui-icon" id="borrowBtn">&#xe609; 借阅此书</i>', '<i class="layui-icon">&#x1006; 关闭页面</i>'],
+                yes: function(index, layero){
+                    //按钮【按钮一】的回调
+
+                    // 判断此书是否已被借阅,推荐使用同步方式啊
+                    var flag = true;
+                    // $.get('/borrow/getBorrowRecords',{loginname: "[[${session.user.loginname}]]", booknum: bookinfo.booknum}, function (res) {
+                    //     if (res.code === 200 ) {
+                    //         layer.msg(res.msg);
+                    //         flag = false;
+                    //     }
+                    // });
+                    $.ajax({
+                        type: "get",
+                        url: "/borrow/getBorrowRecords",
+                        data: 'loginname='+"[[${session.user.loginname}]]"+'&booknum=' + bookinfo.booknum,
+                        datatype: "json",
+                        async: false,
+                        success: function (response) {
+                            if (response.code === 200 ) {
+                                layer.msg(response.msg);
+                                flag = false;
+                                $("#borrowBtn").html("&#xe609; 不可借阅").attr("disabled", "disabled").addClass("layui-disabled");
+                            } else {
+                                //设置借阅按钮 恢复可点击   在前端防止 重复点击
+                                $("#borrowBtn").html("&#xe609; 借阅此书").attr("disabled", false).removeClass("layui-disabled");
+                            }
+                        }
+                    });
+                    if (!flag) {
+                        return false;
+                    }
+
+                    // 认证用户身份，判断是不是本人进行借阅
+                    layer.confirm('你确定要借阅【' + bookinfo.name + '】这本书吗?', {icon: 3, title: '提示'}, function (index) {
+                        //prompt层
+                        layer.prompt({title: '我们需要您输入<b>登录密码</b>，以确认您的身份', formType: 1}, function (pass, index) {
+                            layer.close(index);
+                            $.ajax({
+                                type: "get",
+                                url: "/user/checkUser",
+                                data: 'pwd=' + pass,
+                                datatype: "json",
+                                async: false,
+                                success: function (response) {
+                                    if (response.code !== 200) {
+                                        layer.msg(response.msg);
+                                        return false;
+                                    }
+                                    // 打开弹出层，用户输入借阅信息，完成借阅
+                                    addOrUpdateLayerIndex = layer.open({
+                                        type: 1,
+                                        anim: 2,
+                                        content: $("#addOrUpdateLayer"),
+                                        area: ['55%', '80%'],
+                                        title: ['📝 填写信息', 'font-size:18px; color:#07c462'],
+                                        success: function () {
+                                            // 给图书序列号赋值
+                                            $("#booknum2").val(bookinfo.booknum);
+                                            $("#expectTime").val("");
+                                        }
+                                    });
+                                }
+                            });
+
+                        });
+                    });
+                },
+                btn2: function(index, layero){
+                    //按钮【按钮二】的回调
+                    //return false 开启该代码可禁止点击该按钮关闭
+                },
+                cancel: function(){
+                //右上角关闭回调
+                //return false 开启该代码可禁止点击该按钮关闭
+                },
+                success: function(layero){
+                    //此id为页面层input标签id
+                    var jquerySendHelloButton = $("#book", layero.find("iframe")[0].contentWindow.document);
+                    //要传的值
+                    jquerySendHelloButton.attr("value", data );
+                }
+            });
+        }
+
+        // 借阅图书弹出层提交事件
+        form.on('submit(addBorrow)',function () {
+
+            // 序列化表单内容
+            var expectTime = $("#expectTime");
+            // 截取倒数10位字符
+            expectTime.val(expectTime.val().substr(-10,10) + " 23:59:59");
+            console.log("预期时间：" + expectTime.val());
+            var data = $("#addOrUpdateForm").serialize();
+            console.log("新增、修改弹出层的序列化数据：", data);
+
+            $.post("/borrow/addBorrow", data, function (res) {
+
+                if (res.code === 200) {
+                    layer.close(addOrUpdateLayerIndex);
+                }
+                layer.msg(res.msg);
+            })
+        })
+    });
+</script>
+
+</body>
+</html>

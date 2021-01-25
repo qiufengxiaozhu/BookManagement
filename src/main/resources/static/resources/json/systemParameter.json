@@ -1,0 +1,14 @@
+{
+	"cmsName": "仓库管理系统",
+	"version": "v1.0",
+	"author": "qiufeng",
+	"homePage": "index.html",
+	"server": "windows",
+	"dataBase": "8.00.2039",
+	"maxUpload": "2M",
+	"userRights": "超级管理员",
+	"description": "仓库管理系统",
+	"powerby": "copyright @2020 qiufeng",
+	"record": "京ICP备14040xxx号-1",
+	"keywords": "layuicms,后台模版"
+}

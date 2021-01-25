@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图书上架</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--查询条件开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>查询条件</legend>
+</fieldset>
+
+<blockquote class="layui-elem-quote">
+    <!--条件查询表单-->
+    <form class="layui-form layui-form-pane" action="" method="post" id="searchForm" lay-filter="searchForm">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" for="booknum">图书序列号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="booknum" id="booknum" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="name">图书名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="name" id="name" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="author">图书作者</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="author" id="author" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="putawayStatus">上架状态</label>
+                <div class="layui-input-inline">
+                    <select name="putaway" id="putawayStatus" lay-search>
+                        <option value="" selected>未选择</option>
+                        <option value="0" >未上架</option>
+                        <option value="1" >已上架</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="category">图书分类</label>
+                <div class="layui-input-inline">
+                    <select name="fkCategoryid" id="category" lay-search>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="publisher">出版社</label>
+                <div class="layui-input-inline">
+                    <select name="fkPublisherid" id="publisher" lay-search>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="startTime">出版开始日</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="startTime" id="startTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="endTime">出版结束日</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endTime" id="endTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </div>
+        <!--查询表单按钮-->
+        <div class="layui-row layui-col-space1">
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="grid-demo grid-demo-bg1">
+                    <div class="layui-form-item" style="">
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                                <i class="layui-icon layui-icon-search"></i>
+                                搜索
+                            </button>
+                            <button type="reset" class="layui-btn layui-btn-primary">
+                                <i class="layui-icon layui-icon-refresh-1"></i>
+                                重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+        </div>
+    </form>
+</blockquote>
+<!--查询条件结束-->
+
+<!--在线书架 开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>在线书架</legend>
+</fieldset>
+
+<ul class="flow-default" style="height: 300px; margin-bottom: 50px;" id="bookRack" ></ul>
+<!--在线书架 结束-->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'upload', 'laydate', 'flow'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var upload = layui.upload;
+        var laydate = layui.laydate;
+        var flow = layui.flow;
+
+        // 初始化开始时间选择器
+        var startTime = laydate.render({
+            elem: '#startTime',
+            type: 'datetime',
+            theme: '#4d99cf',
+            istoday: true,
+            done: function (value, date) {
+                date.month = date.month !== 1 ? date.month - 1 : (date.year--, 12);// 月份修正
+                endTime.config.min = date;      // 开始日选好后，重置结束日的最小日期
+                endTime.config.value = value;   // 将结束日的初始值设定为开始日
+                $("#endTime").val(value);       // 给结束时间赋值
+            }
+        });
+
+        // 初始化结束时间选择器
+        var endTime = laydate.render({
+            elem: '#endTime',
+            type: 'datetime',
+            max: '2099-06-16 23:59:59',
+            istoday: true,
+            theme: '#4d99cf',
+            done: function (value, date) {
+                console.log(endTime);
+                // 如果结束时间小于开始时间，就让开始时间=结束时间
+                var start = $("#startTime"), end = $("#endTime");
+                if (start.val() > end.val()) {
+                    start.val(end.val());
+                }
+            }
+        });
+
+        // 获取书籍分类的值
+        $.ajax({
+            url: '/category/getPageCategory?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                // console.log(data.list);
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                }
+                $("#category").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 获取出版社的值
+        $.ajax({
+            url: '/publisher/getPagePublisher?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                //给一个默认值（‘请选择’）
+                var opt = '<option value="" selected="">请选择</option>';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                }
+                $("#publisher").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 初始化流加载
+        flowload();
+
+        //模糊查询
+        form.on("submit(doSearch)",function(data){
+            // 重置流加载内容
+            $("#bookRack").html("");
+            // 调用流加载，并传参
+            flowload(data.field);
+            return false;
+        });
+
+        // 流加载
+        function flowload(data) {
+            flow.load({
+                elem: '#bookRack' //流加载容器
+                , isAuto: false
+                , isLazyimg: true
+                , done: function (page, next) { //加载下一页
+                    //模拟插入
+                    setTimeout(function () {
+                        var lis = [];
+                        var info = { pageNum: page, pageSize: 8 };
+                        // 浅拷贝
+                        $.extend(info, data);
+                        console.log("info:", info);
+                        $.get('/book/getPageBook', info, function (res) {
+                            layui.each(res.list, function (index, item) {
+
+                                var intro = "";     // 简介，纯文本内容
+                                var status = "";    // 上架状态
+                                var action = "";    // 操作
+                                var bgColor = "";   // 按钮背景色
+                                if (item.text.length > 40) {
+                                    intro = item.text.substring(0, 40)+"... ";
+                                } else {
+                                    intro = item.text;
+                                }
+                                if (item.putaway > 0) {
+                                    status = "已上架"; action = "下架图书"; bgColor = "layui-btn-danger";
+                                } else {
+                                    status = "未上架"; action = "上架图书"; bgColor = "layui-btn-warm";
+                                }
+
+                                //执行下一页渲染，第二参数为：满足“加载更多”的条件，即后面仍有分页
+                                //流加载插入内容部分，根据自己需求更改，这里做的案例，所以就写的比较简单
+                                lis.push('<div class="layui-col-sm3">' +
+                                    '       <div class="grid-demo grid-demo-bg1" style="border: 1px solid #dcdedb; min-height: 180px; margin: 3px;">      ' +
+                                    '           <div style="display:inline;">                                                                             ' +
+                                    '               <div class="layui-input-inline" >                                                                     ' +
+                                    '                   <img src="' + item.src + '" alt="'+ item.alt +'" style="width: 120px; height: 145px; ">           ' +
+                                    '               </div>                                                                                                ' +
+                                    '               <div class="layui-input-inline" style="max-width: 180px; height: 145px; margin-left: 3px; ">          ' +
+                                    '                   <hr class="layui-bg-white" style="margin: 1px;">                                                  ' +
+                                    '                   <span style="padding: 2px; background-color: #eae9e9; font-size: smaller; border-radius: 3px;">   ' +
+                                    '                       📔 书名： '+ item.name +'</span><hr class="layui-bg-white" style="margin: 1px;">              ' +
+                                    '                   <span style="padding: 2px; font-size: smaller; border-radius: 3px;">                              ' +
+                                    '                       ✍ 作者： '+ item.author +'</span><hr class="layui-bg-white" style="margin: 1px;">             ' +
+                                    '                   <span style="padding: 2px; background-color: #eae9e9; font-size: smaller; border-radius: 3px;">   ' +
+                                    '                       ⏰ 出版时间：<br>'+  item.publishTime +'</span><hr class="layui-bg-white" style="margin: 1px;">' +
+                                    '                   <span style="padding: 2px;  font-size: smaller; border-radius: 3px;">                             ' +
+                                    '                       📖 简介：<br>'+ intro +'</span><hr class="layui-bg-white" style="margin: 1px;">               ' +
+                                    '               </div>                                                                                                ' +
+                                    '           </div>                                                                                                    ' +
+                                    '           <div class="layui-input-inline" style="width: 98%; height: 25px; border: 0 solid #FD482C; margin-left: 3px; ">'+
+                                    '               <hr class="layui-bg-white" style="margin: 1px;">                                                      ' +
+                                    '               <span class="layui-badge layui-bg-blue">状态：'+ status +'</span> ‖                                    ' +
+                                    '               <span style="padding: 2px; font-size: smaller; ">操作：                                                ' +
+                                    '                   <button index="'+index+'" class="layui-btn layui-btn-xs '+bgColor+' putawayfun">'+action+'</button> ' +
+                                    // '                   <button onclick="putawayfun(\''+item.id+'\', \''+item.putaway+'\')" class="layui-btn layui-btn-xs '+bgColor+'">'+action+'</button> ' +
+                                    '               </span>                                                                                                ' +
+                                    '           </div>                                                                                                     ' +
+                                    '       </div>                                                                                                         ' +
+                                    '    </div>                                                                                                            ');
+                            });
+                            lis.push('<hr class="layui-bg-orange">');
+                            //total为Ajax返回的总页数，只有当前页小于总页数的情况下，才会继续出现加载更多
+                            next(lis.join(''), page < res.pages); //假设总页数为 10
+                            $(".putawayfun").click(function(){
+                                var data = res.list[parseInt($(this).attr("index"))];
+                                // console.log(data);
+                                putawayfun_2(data);
+                            });
+                        })
+                    }, 500);
+                }
+            });
+        }
+
+        // 方式一：图书上架下架,js拼接的点击事件一定要这样写才行,方式一
+        putawayfun = function (data1, data2) {
+            console.log(data1, data2);
+            var tips = data2 > 0 ? "下架" : "上架";
+            layer.confirm('你确定要'+ tips +'这本书吗?', {icon: 3, title: '提示'}, function (index) {
+                $.post("/book/putawayBook", {id: data1, putaway: data2}, function (res) {
+                    layer.msg(res.msg);
+                    if (res.code === 200) {
+                        // 重置流加载内容
+                        $("#bookRack").html("");
+                        flowload();
+                    }
+                })
+            });
+        };
+
+        // 方式二：
+        function putawayfun_2(data) {
+            console.log(data);
+            var tips = data.putaway > 0 ? "下架" : "上架";
+            layer.confirm('你确定要'+ tips +'这本书吗?', {icon: 3, title: '提示'}, function (index) {
+                $.post("/book/putawayBook", data, function (res) {
+                    layer.msg(res.msg);
+                    if (res.code === 200) {
+                        // 重置流加载内容
+                        $("#bookRack").html("");
+                        flowload();
+                    }
+                })
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

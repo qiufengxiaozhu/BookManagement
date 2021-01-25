@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:form="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <title>门户页面</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/cate.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--时间信息板块-->
+<blockquote class="layui-elem-quote layui-bg-green layui-row">
+    <div id="nowTime"></div>
+    <div id="nextTime"></div>
+</blockquote>
+
+<!--其他信息板块-->
+<div class="layui-row layui-col-space10">
+    <!--左部分板块-->
+    <div class="layui-col-lg6 layui-col-md12">
+        <blockquote class="layui-elem-quote title">最受欢迎的书籍排行</blockquote>
+        <div class="mainmenu">
+            <img src="/resources/images/5_top.jpg" height="8" class="bottom" alt=""/>
+            <div id="bookRack_popular"></div>
+        </div>
+        <hr>
+        <blockquote class="layui-elem-quote title">借阅前十排行榜</blockquote>
+        <table id="userGrade" lay-filter="userGrade"></table>
+    </div>
+
+    <!--右部分板块-->
+    <div class="layui-col-lg6 layui-col-md12">
+        <blockquote class="layui-elem-quote title">最新上架的书籍排行<i class="layui-icon layui-red">&#xe756;</i></blockquote>
+        <div class="mainmenu">
+            <img src="/resources/images/5_top.jpg" height="8" class="bottom" alt=""/>
+            <div id="bookRack_putaway"></div>
+        </div>
+        <hr>
+        <blockquote class="layui-elem-quote title">图书分类比例</blockquote>
+        <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+        <div id="mainECharts" style="width: 600px; height:400px;"></div>
+    </div>
+</div>
+
+<!-- 添加和修改的弹出层开始 -->
+<div style="display: none; padding: 5px" id="addOrUpdateLayer">
+    <form action="" method="post" class="layui-form layui-form-pane" id="addOrUpdateForm" lay-filter="dataFrm">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="expectTime">还书时间</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="booknum" id="booknum2">
+                <input type="text" name="expectTime" id="expectTime" readonly lay-verify="required" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" for="content">借阅公告</label>
+            <div class="layui-input-block">
+                <form:textarea class="layui-textarea" id="content" htmlEscape="true" readonly>
+                    亲爱的同学：<br>
+                    &emsp;&emsp;大家好！<br>
+                    &emsp;&emsp;很高兴同学能够积极参与到课外阅读中提升自己的视野，我们也积极配合同学们的阅读借阅工作。
+                    但是还请注意，由于本图书馆的图书属于<span style="color: #01AAED">公共资源</span>，还请各位同学借阅之后好好保管，以便其他的同学们进行借阅。
+                    另外，还请注意自己填写的借阅归还时间，逾时未归还是会扣除一定的<span style="color: #ff6700">押金</span>，并影响信誉的哦！<br>
+                    &emsp;&emsp;祝大家博学之，审问之，慎思之，明辨之，笃行之。<br>
+                    <hr class="layui-bg-blue">
+                    <b>规定：</b><br>
+                    &emsp;&emsp;1、借阅归还时间范围为<span style="color: #01AAED">借阅书籍的第二天开始至下个月的今天截止</span>。<br>
+                    &emsp;&emsp;2、逾时一天未归还将扣除您的押金，<span style="color: #ff6700">每天扣除0.2元，依次累加</span>，直至归还。<br>
+                </form:textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-blocklayer-footer" style="text-align: center; float: bottom; ">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="addBorrow" id="doSubmit">
+                    <span class="layui-icon layui-icon-ok"></span> 确定
+                </button>
+                <button type="reset" class="layui-btn layui-btn-warm" id="doReset">
+                    <span class="layui-icon layui-icon-refresh-1"></span> 重置
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- 添加和修改的弹出层结束 -->
+
+<!--排行榜图标-->
+<script type="text/html" id="gradeIcon">
+    {{#  if(d.rank == 1){ }}
+    <span class="seraph vip1 icon-vip1"></span>
+    {{#  } else if(d.rank == 2){ }}
+    <span class="seraph vip2 icon-vip2"></span>
+    {{#  } else if(d.rank == 3){ }}
+    <span class="seraph vip3 icon-vip3"></span>
+    {{#  } else if(d.rank == 4){ }}
+    <span class="seraph vip4 icon-vip4"></span>
+    {{#  } else if(d.rank == 5){ }}
+    <span class="seraph vip5 icon-vip5"></span>
+    {{#  } else if(d.rank == 6){ }}
+    <span class="seraph vip6 icon-vip6"></span>
+    {{#  } else if(d.rank == 7){ }}
+    <span class="seraph vip7 icon-vip7"></span>
+    {{#  } else if(d.rank == 8){ }}
+    <span class="seraph vip8 icon-vip8"></span>
+    {{#  } else if(d.rank == 9){ }}
+    <span class="seraph vip9 icon-vip9"></span>
+    {{#  } else if(d.rank == 10){ }}
+    <span class="seraph vip10 icon-vip10"></span>
+    {{#  }}}
+</script>
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript" src="/resources/js/echarts.min.js"></script>
+<script type="text/javascript">
+
+    // 获取当前登录用户名
+    var username = "[[${session.user.name}]]";
+    //获取系统时间
+    var newDate = '';
+    getLangDate();
+
+    //值小于10时，在前面补0
+    function dateFilter(date) {
+        if (date < 10) {
+            return "0" + date;
+        }
+        return date;
+    }
+
+    function getLangDate() {
+        var dateObj = new Date(); //表示当前系统时间的Date对象
+        var year = dateObj.getFullYear(); //当前系统时间的完整年份值
+        var month = dateObj.getMonth() + 1; //当前系统时间的月份值
+        var date = dateObj.getDate(); //当前系统时间的月份中的日
+        var day = dateObj.getDay(); //当前系统时间中的星期值
+        var weeks = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        var week = weeks[day]; //根据星期值，从数组中获取对应的星期字符串
+        var hour = dateObj.getHours(); //当前系统时间的小时值
+        var minute = dateObj.getMinutes(); //当前系统时间的分钟值
+        var second = dateObj.getSeconds(); //当前系统时间的秒钟值
+        var timeValue = "" + ((hour >= 12) ? (hour >= 18) ? "晚上" : "下午" : "上午"); //当前时间属于上午、晚上还是下午
+        newDate = dateFilter(year) + "年" + dateFilter(month) + "月" + dateFilter(date) + "日 " + " " + dateFilter(hour) + ":" + dateFilter(minute) + ":" + dateFilter(second);
+        document.getElementById("nowTime").innerHTML = "亲爱的【" + username + "】，" + timeValue + "好！ 欢迎使用图书管理系统。当前时间为： " + newDate + "　" + week;
+        setTimeout("getLangDate()", 1000);
+    }
+
+    layui.use(['form', 'element', 'layer', 'jquery', 'flow', 'table', 'laytpl', 'laydate'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var element = layui.element;
+        var flow = layui.flow;
+        var table = layui.table;
+        var laytpl = layui.laytpl;
+        var laydate = layui.laydate;
+        var $ = layui.jquery;
+
+        // 定义图书借阅的弹出层
+        var addOrUpdateLayerIndex;
+
+        // 定义还书截止日
+        var dateTime = new Date();
+
+        // 初始化预期还书时间选择器
+        laydate.render({
+            elem: '#expectTime',
+            type: 'date',
+            range: true,
+            istoday: true,
+            min: dateTime.setDate(dateTime.getDate() + 1),
+            max: dateTime.setMonth(dateTime.getMonth() + 1),
+            theme: '#4d99cf'
+        });
+
+        // 将字符串转化为json对象
+        $.extend({
+            /* 解析为JSON */
+            "parseJSON": function (str) {
+                var strArr = str.split("&");
+                var searchJSON = {};
+                $.each(strArr, function (index, item) {
+                    var newItem = item.split("=");
+                    searchJSON[newItem[0]] = decodeURIComponent(newItem[1]);
+                });
+                return searchJSON;
+            }
+        });
+
+        //上次登录时间【此处应该从接口获取，实际使用中请自行更换】
+        // $("#nextTime").html("上次登录时间：" + newDate.split("日")[0] + "日 " + newDate.split("日")[1]);
+        $.get('/index/getLastLoginTime', function (res) {
+            $("#nextTime").html("上次登录时间：" + res.data.logintime);
+        });
+
+        flowload_popular();
+        // 加载最受欢迎的书籍排行
+        function flowload_popular() {
+            flow.load({
+                elem: '#bookRack_popular' //流加载容器
+                , isAuto: false
+                , isLazyimg: true
+                , done: function (page, next) { //加载下一页
+                    //模拟插入
+                    setTimeout(function () {
+                        var lis = [];
+                        var info = { pageNum: page, pageSize: 3, putaway: 1 };
+                        console.log("info:", info);
+                        $.get('/book/getPageBookByPopular', info, function (res) {
+                            lis.push('<ul id="grid" class="group">');
+                            layui.each(res.list, function (index, item) {
+
+                                //执行下一页渲染，第二参数为：满足“加载更多”的条件，即后面仍有分页
+                                //流加载插入内容部分，根据自己需求更改，这里做的案例，所以就写的比较简单
+                                lis.push('<li>' +
+                                    '       <a onclick="readBook(\''+ $.param(item) +'\'); return false;" href="#">' +
+                                    '           <img src="'+item.src+'" alt="'+item.alt+'" style="box-shadow: 2px 2px 14px 4px rgba(0, 0, 0, 0.35);"/>' +
+                                    '           <p style="margin-top:2px; font-weight: bold; color: #FD482C">【 '+item.name+' 】</p>' +
+                                    '       </a>' +
+                                    '     </li>'
+                                );
+                            });
+                            lis.push('</ul><img src="/resources/images/5_gc.jpg" height="19" class="gc" alt=""/>');
+                            //total为Ajax返回的总页数，只有当前页小于总页数的情况下，才会继续出现加载更多
+                            next(lis.join(''), page < 2); // 设置最大页面为2页
+                            // 定义书架上的书
+                            var book_image = $(".mainmenu li a img");
+                            //设置图片的高度
+                            book_image.height(Number(book_image.width()) * 1.3);
+                        })
+                    }, 500);
+                }
+            });
+        }
+
+        flowload_putaway();
+        // 加载最新上架的书籍排行
+        function flowload_putaway() {
+            flow.load({
+                elem: '#bookRack_putaway' //流加载容器
+                , isAuto: false
+                , isLazyimg: true
+                , done: function (page, next) { //加载下一页
+                    //模拟插入
+                    setTimeout(function () {
+                        var lis = [];
+                        var info = { pageNum: page, pageSize: 3, putaway: 1 };
+                        console.log("info:", info);
+                        $.get('/book/getPageBook', info, function (res) {
+                            lis.push('<ul id="grid" class="group">');
+                            layui.each(res.list, function (index, item) {
+
+                                //执行下一页渲染，第二参数为：满足“加载更多”的条件，即后面仍有分页
+                                //流加载插入内容部分，根据自己需求更改，这里做的案例，所以就写的比较简单
+                                lis.push('<li>' +
+                                    '       <a onclick="readBook(\''+ $.param(item) +'\'); return false;" href="#">' +
+                                    '           <img src="'+item.src+'" alt="'+item.alt+'" style="box-shadow: 2px 2px 14px 4px rgba(0, 0, 0, 0.35);"/>' +
+                                    '           <p style="margin-top:2px; font-weight: bold; color: #FD482C">【 '+item.name+' 】</p>' +
+                                    '       </a>' +
+                                    '     </li>'
+                                );
+                            });
+                            lis.push('</ul><img src="/resources/images/5_gc.jpg" height="19" class="gc" alt=""/>');
+                            //total为Ajax返回的总页数，只有当前页小于总页数的情况下，才会继续出现加载更多
+                            next(lis.join(''), page < 2); // 设置最大页面为2页
+                            // 定义书架上的书
+                            var book_image = $(".mainmenu li a img");
+                            //设置图片的高度
+                            book_image.height(Number(book_image.width()) * 1.3);
+                        })
+                    }, 500);
+                }
+            });
+        }
+
+        // 加载用户排行
+        table.render({
+            elem: '#userGrade',
+            url : '/index/getTopTenRank',
+            cellMinWidth : 95,
+            even: true,           //开启隔行背景
+            response: {
+                statusName: 'code'          //规定数据状态的字段名称，默认：code
+                , statusCode: 200           //规定成功的状态码，默认：0
+                , dataName: 'list'          //规定数据列表的字段名称，默认：data
+            },
+            title: '借阅前十排行表',
+            cols : [ [
+                {type: 'numbers', title: '序号', width: 60, fixed:"left", align:'center'},
+                {field: 'rank', title: '排名徽章', templet:'#gradeIcon', align:'center'},
+                {field: 'loginname', title: '用户名',  align:'center'},
+                {field: 'number', title: '借阅数量', sort:"true", align:'center'}
+            ] ]
+        });
+
+        //设置图片的高度
+        $(window).resize(function(){
+            // 定义书架上的书
+            var book_image = $(".mainmenu li a img");
+            book_image.height(Number(book_image.width()) * 1.3);
+        })
+
+        // 书籍阅读 事件
+        readBook = function (data) {
+            console.log("书籍信息：", data);
+            console.log("书籍信息：", $.parseJSON(data));
+            var bookinfo = $.parseJSON(data);
+            layer.open({
+                type: 2,    // iframe层-父子操作
+                // title:['📜 在线阅读', 'font-size:18px; color:#07c462'],
+                area: ['70%', '85%'],
+                fixed: false, // 不固定
+                maxmin: true,
+                resize: true, // 允许拖拽大小
+                content: '/sys/toOnlineReading', // 需要跳转的地址，或者是静态文件
+                btn: ['<i class="layui-icon" id="borrowBtn">&#xe609; 借阅此书</i>', '<i class="layui-icon">&#x1006; 关闭页面</i>'],
+                yes: function(index, layero){
+                    //按钮【按钮一】的回调
+
+                    // 判断此书是否已被借阅,推荐使用同步方式啊
+                    var flag = true;
+                    // $.get('/borrow/getBorrowRecords',{loginname: "[[${session.user.loginname}]]", booknum: bookinfo.booknum}, function (res) {
+                    //     if (res.code === 200 ) {
+                    //         layer.msg(res.msg);
+                    //         flag = false;
+                    //     }
+                    // });
+                    $.ajax({
+                        type: "get",
+                        url: "/borrow/getBorrowRecords",
+                        data: 'loginname='+"[[${session.user.loginname}]]"+'&booknum=' + bookinfo.booknum,
+                        datatype: "json",
+                        async: false,
+                        success: function (response) {
+                            if (response.code === 200 ) {
+                                layer.msg(response.msg);
+                                flag = false;
+                                $("#borrowBtn").html("&#xe609; 不可借阅").attr("disabled", "disabled").addClass("layui-disabled");
+                            } else {
+                                //设置借阅按钮 恢复可点击   在前端防止 重复点击
+                                $("#borrowBtn").html("&#xe609; 借阅此书").attr("disabled", false).removeClass("layui-disabled");
+                            }
+                        }
+                    });
+                    if (!flag) {
+                        return false;
+                    }
+
+                    // 认证用户身份，判断是不是本人进行借阅
+                    layer.confirm('你确定要借阅【' + bookinfo.name + '】这本书吗?', {icon: 3, title: '提示'}, function (index) {
+                        //prompt层
+                        layer.prompt({title: '我们需要您输入<b>登录密码</b>，以确认您的身份', formType: 1}, function (pass, index) {
+                            layer.close(index);
+                            $.ajax({
+                                type: "get",
+                                url: "/user/checkUser",
+                                data: 'pwd=' + pass,
+                                datatype: "json",
+                                async: false,
+                                success: function (response) {
+                                    if (response.code !== 200) {
+                                        layer.msg(response.msg);
+                                        return false;
+                                    }
+                                    // 打开弹出层，用户输入借阅信息，完成借阅
+                                    addOrUpdateLayerIndex = layer.open({
+                                        type: 1,
+                                        anim: 2,
+                                        content: $("#addOrUpdateLayer"),
+                                        area: ['55%', '80%'],
+                                        title: ['📝 填写信息', 'font-size:18px; color:#07c462'],
+                                        success: function () {
+                                            // 给图书序列号赋值
+                                            $("#booknum2").val(bookinfo.booknum);
+                                            $("#expectTime").val("");
+                                        }
+                                    });
+                                }
+                            });
+
+                        });
+                    });
+                },
+                btn2: function(index, layero){
+                    //按钮【按钮二】的回调
+                    //return false 开启该代码可禁止点击该按钮关闭
+                },
+                cancel: function(){
+                    //右上角关闭回调
+                    //return false 开启该代码可禁止点击该按钮关闭
+                },
+                success: function(layero){
+                    //此id为页面层input标签id
+                    var jquerySendHelloButton = $("#book", layero.find("iframe")[0].contentWindow.document);
+                    //要传的值
+                    jquerySendHelloButton.attr("value", data );
+                }
+            });
+        }
+
+        // 借阅图书弹出层提交事件
+        form.on('submit(addBorrow)',function () {
+
+            // 序列化表单内容
+            var expectTime = $("#expectTime");
+            // 截取倒数10位字符
+            expectTime.val(expectTime.val().substr(-10,10) + " 23:59:59");
+            console.log("预期时间：" + expectTime.val());
+            var data = $("#addOrUpdateForm").serialize();
+            console.log("新增、修改弹出层的序列化数据：", data);
+
+            $.post("/borrow/addBorrow", data, function (res) {
+
+                if (res.code === 200) {
+                    layer.close(addOrUpdateLayerIndex);
+                }
+                layer.msg(res.msg);
+            })
+        })
+
+        /*########################################################################*/
+
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('mainECharts'));
+
+        // 指定图表的配置项和数据
+        var dataChart = genData();
+
+        var option;
+        // 图书分类比例统计图
+        option = {
+            title: {
+                text: '图书分类比例统计图',
+                subtext: '[饼图]',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            legend: {
+                type: 'scroll',
+                orient: 'vertical',
+                left: 'left',
+                top: 20,
+                bottom: 20,
+                data: dataChart.legendData,
+                selected: dataChart.selected
+            },
+            //设置饼状图每个颜色块的颜色
+            color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
+            series: [
+                {
+                    name: '分类',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    center: ['50%', '50%'],
+                    data: dataChart.seriesData,
+                    itemStyle: {
+                        borderRadius: 6,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center',
+                        formatter: '{b} \n {c} ({d}%)'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '20',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    }
+                }
+            ]
+        };
+
+        // 获取图书分类比例统计图数据
+        function genData() {
+
+            var legendData = [];
+            var seriesData = [];
+            var selected = {};
+
+            // 使用ajax，从后台获取图书分类比例统计图数据
+            $.ajax({
+                type: "get",
+                url: '/index/getCategoryRatio',
+                dataType: "json",
+                async: false,
+                success: function (res) {
+                    var data = res.list;
+                    console.log("图书分类比例统计图 ：", data);
+
+                    for (var i = 0; i < data.length; i++) {
+                        console.log("数据：", data[i].categoryName);
+                        legendData.push(data[i].categoryName);
+                        seriesData.push({
+                            name: data[i].categoryName,
+                            value: data[i].categoryNumber
+                        });
+                    }
+                    selected[name] = i < data.length;
+                }
+            });
+
+            return {
+                legendData: legendData,
+                seriesData: seriesData,
+                selected: selected
+            };
+        }
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    })
+
+</script>
+
+</body>
+</html>

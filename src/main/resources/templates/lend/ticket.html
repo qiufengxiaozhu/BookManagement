@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>罚金纪录</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--查询条件开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>查询条件</legend>
+</fieldset>
+
+<blockquote class="layui-elem-quote">
+    <!--条件查询表单-->
+    <form class="layui-form layui-form-pane" action="" method="post" id="searchForm" lay-filter="searchForm">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" for="booknum">图书序列号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="booknum" id="booknum" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="id">罚单ID</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="id" id="id" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <span th:if="${session.user.type} == 0">
+                <div class="layui-inline">
+                    <label class="layui-form-label" for="loginname">登录名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="loginname" id="loginname" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </span>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="flagStatus">归还状态</label>
+                <div class="layui-input-inline">
+                    <select name="returnFlag" id="flagStatus">
+                        <option value="" selected>未选择</option>
+                        <option value="0" >未归还</option>
+                        <option value="1" >已归还</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" for="flagStatus2">支付状态</label>
+                <div class="layui-input-inline">
+                    <select name="payFlag" id="flagStatus2">
+                        <option value="" selected>未选择</option>
+                        <option value="0" >未支付</option>
+                        <option value="1" >已支付</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <!--查询表单按钮-->
+        <div class="layui-row layui-col-space1">
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="grid-demo grid-demo-bg1">
+                    <div class="layui-form-item" style="">
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                                <i class="layui-icon layui-icon-search"></i>
+                                搜索
+                            </button>
+                            <button type="reset" class="layui-btn layui-btn-primary">
+                                <i class="layui-icon layui-icon-refresh-1"></i>
+                                重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <!--占位-->
+                <div class="grid-demo grid-demo-bg1"></div>
+            </div>
+        </div>
+    </form>
+</blockquote>
+<!--查询条件结束-->
+
+<!--在线书架 开始-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+    <legend>借阅记录</legend>
+</fieldset>
+
+<!--查询列表开始-->
+<div>
+    <table class="layui-hide" id="ticketTable" lay-filter="ticketTable"></table>
+
+    <div id="toolbar" style="display: none;">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-md layui-icon layui-icon-form" lay-event="getCheckData"> 获取选中行数据</button>
+            <button class="layui-btn layui-btn-md layui-btn-normal" lay-event="getCheckLength">
+                <img src="/resources/images/number_icon.svg" alt="选中数目"> 获取选中数目
+            </button>
+            <button class="layui-btn layui-btn-md layui-btn-warm layui-icon layui-icon-survey" lay-event="isAll"> 验证是否全选</button>
+        </div>
+    </div>
+
+    <div id="actionbar" style="display: none;">
+        <a class="layui-btn layui-btn-xs" lay-event="detail" id="btn-detail">
+            <img src="/resources/images/publish_icon.svg" alt="详情"> 图书详情
+        </a>
+        <span th:if="${session.user.type} == 0">
+            {{# if (d.payFlag == 0){ }}
+            <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="back" id="btn-back">
+                <img src="/resources/images/edit_icon.svg" alt="归还"> 支付罚金
+            </a>
+            {{#  } else { }}
+            <a class="layui-btn layui-btn-xs" style="background-color: #fc97f0" lay-event="finish" id="btn-finish">
+                <img src="/resources/images/show_icon.svg" alt="完结" title="支付完成"> 支付完成
+            </a>
+            {{# } }}
+        </span>
+    </div>
+</div>
+<!--查询列表结束-->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'upload', 'table'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var upload = layui.upload;
+        var table = layui.table;
+
+        // 初始化罚单表单数据
+        var ticketTable = table.render({
+            elem: '#ticketTable'
+            , url: '/ticket/getPageTicket'
+            , toolbar: '#toolbar' // 开启头部工具栏，并为其绑定左侧模板
+            ,totalRow: true       // 开启合计行
+            ,even: true           // 开启隔行背景
+            , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                title: '提示'
+                , layEvent: 'LAYTABLE_TIPS'
+                , icon: 'layui-icon-tips'
+            }]
+            , page: true  // 分页
+            , request: {
+                pageName: 'pageNum'         //页码的参数名称，默认：page
+                , limitName: 'pageSize'     //每页数据量的参数名，默认：limit
+            }
+            , response: {
+                statusName: 'code'          //规定数据状态的字段名称，默认：code
+                , statusCode: 200           //规定成功的状态码，默认：0
+                , countName: 'total'        //规定数据总数的字段名称，默认：count
+                , dataName: 'list'          //规定数据列表的字段名称，默认：data
+            }
+            , height: 'full-220'
+            , title: '罚单信息表'
+            , cols: [ [
+                {type: 'checkbox', fixed: 'left'}
+                , {type: 'numbers', title: '序号', fixed: 'left', totalRowText: '合计'}
+                , {field: 'id', title: '罚单id', width: '100', sort: true}
+                , {field: 'loginname', title: '登录名', width: '100'}
+                , {field: 'booknum', title: '序列号', width: '100', sort: true}
+                , {field: 'overDate', title: '超期天数', width: '110', totalRow: true, sort: true}
+                , {field: 'overFee', title: '单日逾期金额', width: '120'}
+                , {field: 'ticketFee', title: '需付金额', width: '110', totalRow: true, sort: true}
+                , {field: 'returnFlag', title: '是否归还', width: '100',
+                    templet: function (d) { // 上架状态 0-未上架 1-已上架
+                        if (d.returnFlag === 0) {
+                            return '<span style="color: #01AAED">未归还</span>';
+                        } else {
+                            return '<span style="color: #ff6700">已归还</span>';
+                        }
+                    }
+                }
+                , {field: 'payFlag', title: '是否支付', width: '100',
+                    templet: function (d) { // 上架状态 0-未上架 1-已上架
+                        if (d.payFlag === 0) {
+                            return '<span style="color: #01AAED">未支付</span>';
+                        } else {
+                            return '<span style="color: #ff6700">已支付</span>';
+                        }
+                    }
+                }
+                , {field: 'createTime', title: '创建时间', width: '180'}
+                , {field: 'updateTime', title: '修改时间', width: '180', sort: true}
+                , {fixed: 'right', title: '操作', toolbar: '#actionbar', width: 'auto'}
+            ] ]
+            ,done: function(res, curr, count){ // 处理删除某一页最后一条数据的BUG
+                if (res.list.length === 0 && curr !== 1){
+                    ticketTable.reload({
+                        page:{
+                            curr:(curr-1)
+                        }
+                    });
+                }
+            }
+        });
+
+        //模糊查询
+        form.on("submit(doSearch)",function(data){
+            ticketTable.reload({
+                where:data.field,
+                page:{
+                    curr:1
+                }
+            });
+            return false;
+        });
+
+        //监听头部工具栏事件
+        table.on('toolbar(ticketTable)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'getCheckData':
+                    var data1 = checkStatus.data;
+                    layer.alert(JSON.stringify(data1));
+                    break;
+                case 'getCheckLength':
+                    var data2 = checkStatus.data;
+                    layer.msg('选中了：'+ data2.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+                // 自定义头工具栏右侧图标 - 提示
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+            }
+        });
+
+        //监听行工具事件
+        table.on('tool(ticketTable)', function(obj){
+            var data = obj.data;
+            switch (obj.event) {
+                case 'detail':
+                    detailBook(data);
+                    break;
+                case 'back':
+                    returnBook(data);
+                    break;
+                case 'finish':
+                    finishBook(data);
+                    break;
+            }
+        });
+
+        // 查看详情
+        function detailBook(data) {
+            console.log("书籍信息：", data);
+            layer.open({
+                type: 2,    // iframe层-父子操作
+                // title:['📜 在线阅读', 'font-size:18px; color:#07c462'],
+                area: ['70%', '85%'],
+                fixed: false, // 不固定
+                maxmin: true,
+                resize: true, // 允许拖拽大小
+                content: '/sys/toOnlineReading', // 需要跳转的地址，或者是静态文件
+                cancel: function(){
+                    //右上角关闭回调
+                    //return false 开启该代码可禁止点击该按钮关闭
+                },
+                success: function(layero){
+                    //此id为页面层input标签id
+                    var jquerySendHelloButton = $("#book", layero.find("iframe")[0].contentWindow.document);
+                    //要传的值
+                    jquerySendHelloButton.attr("value", "booknum="+data.booknum);
+                }
+            });
+        }
+
+        // 支付罚金
+        function returnBook(data) {
+            console.log("支付罚金：", data);
+            var success = false;
+            // 查询该条记录是否已经归还
+            $.ajax({
+                type: "get",
+                url: "/borrow/getBorrowFlagById",
+                data: 'id=' + data.id,
+                datatype: "json",
+                async: false,
+                success: function (response) {
+                    if (response.code !== 200) {
+                        layer.msg(response.msg);
+                        success = true;
+                    }
+                }
+            });
+            if (success) {
+                return false;
+            }
+            layer.confirm('你确定要支付这条记录的罚金吗?', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                //prompt层
+                layer.prompt({title: '我们需要您输入<b>登录密码</b>，以确认您的身份', formType: 1}, function (pass, index) {
+                    layer.close(index);
+                    $.ajax({
+                        type: "get",
+                        url: "/user/checkUser",
+                        data: 'pwd=' + pass,
+                        datatype: "json",
+                        async: false,
+                        success: function (response) {
+                            if (response.code !== 200) {
+                                layer.msg(response.msg);
+                                return false;
+                            } else {
+                                // 执行支付操作
+                                $.post("/ticket/payTicket", data, function (res) {
+                                    layer.msg(res.msg);
+                                    if (res.code === 200) {
+                                        ticketTable.reload();
+                                    }
+                                })
+                            }
+                        }
+                    });
+                });
+
+            });
+        }
+
+        // 支付完成
+        function finishBook(data) {
+            layer.msg("该条记录已经支付完结了哦，请勿重复支付！");
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.java.book.mapper.BorrowMapper">
+
+    <!--查询出借阅前十排行-->
+    <select id="getTopTenRank" resultType="com.java.book.entity.Borrow">
+
+        select @n:=@n+1 as rank, loginname, number from
+            (
+            select loginname, count(loginname) number  from sys_borrow GROUP BY loginname ORDER BY number asc
+            ) a, (select @n:= 0) d
+        ORDER BY rank asc
+            limit 10
+
+    </select>
+</mapper>

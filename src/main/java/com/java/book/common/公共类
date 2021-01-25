@@ -1,0 +1,12 @@
+
+ActiveUser  : 登录用户信息
+
+Constant    ：常量池
+
+ResultObj   ：返回json数据
+
+TreeNode    ：树结构菜单封装
+
+TreeNodeBuilder ： 树节点层级构造器
+
+

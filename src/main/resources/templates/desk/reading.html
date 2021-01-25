@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>在线阅读</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/cate.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<!--图书信息 开始-->
+<fieldset class="layui-elem-field layui-field-title">
+    <legend>📕图书信息</legend>
+</fieldset>
+
+<div class="layui-tab layui-tab-card">
+    <ul class="layui-tab-title">
+        <li class="layui-this">详细参数</li>
+        <li>正文内容</li>
+    </ul>
+    <div class="layui-tab-content" style="height: 100%;">
+        <!--详细参数 开始-->
+        <div class="layui-tab-item layui-show">
+
+            <form class="layui-form layui-form-pane" action="" id="infoForm" lay-filter="infoForm">
+                <div class="layui-form">
+                    <table class="layui-table">
+                        <colgroup>
+                            <col width="150">
+                            <col>
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>参数</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><label for="booknum">序列号</label></td>
+                                <td><input type="hidden" id="book">
+                                    <input type="text" name="booknum" id="booknum" readonly style="border: 0;"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="name">书名</label></td>
+                                <td><input type="text" name="name" id="name" readonly style="border: 0;"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="preImage">书籍封面：</label></td>
+                                <td><img class="layui-upload-img" id="preImage" alt="" src="" style="max-width: 200px; max-height: 120px;"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="author">作者：</label></td>
+                                <td><input type="text" name="author" id="author" readonly style="border: 0;"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="category">分类：</label></td>
+                                <td><select name="fkCategoryid" id="category" ></select></td>
+                            </tr>
+                            <tr>
+                                <td><label for="number">库存：</label></td>
+                                <td><input type="text" name="number" id="number" readonly style="border: 0;"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="publisher">出版社：</label></td>
+                                <td><select name="fkPublisherid" id="publisher" ></select></td>
+                            </tr>
+                            <tr>
+                                <td><label for="publishTime">出版时间：</label></td>
+                                <td><input type="text" name="publishTime" id="publishTime" readonly style="border: 0;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <!--详细参数 结束-->
+
+        <!--正文内容 开始-->
+        <div class="layui-tab-item">
+            <h1 id="show_title" style="text-align: center"></h1>
+            <br>
+            <div class="layui-row">
+                <div class="layui-col-md4" style="float: right;">
+                    著&ensp;作&ensp;人：<span id="show_author" style="color: #01AAED"></span>
+                    <br>
+                    出版时间：<span id="show_publishtime" style="color: #ff5722"></span>
+                </div>
+            </div>
+            <hr>
+            <div id="show_content"></div>
+        </div>
+        <!--正文内容 结束-->
+    </div>
+</div>
+<!--图书信息 结束-->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form', 'layer', 'jquery', 'flow', 'element'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var flow = layui.flow;
+        var element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+
+        // 将字符串转化为json对象
+        $.extend({
+            /* 解析为JSON */
+            "parseJSON": function (str) {
+                var strArr = str.split("&");
+                var searchJSON = {};
+                $.each(strArr, function (index, item) {
+                    var obj = item.split("=");
+                    searchJSON[obj[0]] = decodeURIComponent(obj[1]);
+                });
+                return searchJSON;
+            }
+        });
+
+        // 接收从书架页面传递过来的值
+        var bookInfo = $.parseJSON($("#book").val())
+        console.log("bookInfo：", bookInfo);
+
+        // 接收后台查询的书籍信息
+        var newBook = "";
+
+        // 获取该书本的值
+        $.get('/book/getBook?booknum='+bookInfo.booknum, function (res) {
+            if (res.code === 200 ) {
+
+                newBook = res.data.book;
+                // 装载新的数据
+                form.val("infoForm", newBook);
+                $("#show_publishtime").html(newBook.publishTime);
+                $("#show_content").html(newBook.content);
+                $("#show_author").html(newBook.author);
+                $("#show_title").html(newBook.name);
+
+                $("#preImage").attr("src", newBook.src).attr("alt", newBook.alt);
+            } else {
+                layer.msg(res.msg);
+            }
+        });
+
+        // 获取书籍分类的值
+        $.ajax({
+            url: '/category/getPageCategory?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                // console.log(data.list);
+                //给一个默认值（‘请选择’）
+                var opt = '';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    if (value.hasOwnProperty(i)) {
+                        if (Number(value[i].id) === Number(newBook.fkCategoryid)) {
+                            opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                        }
+                    }
+                }
+                $("#category").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+        // 获取出版社的值
+        $.ajax({
+            url: '/publisher/getPagePublisher?pageNum=1&pageSize=100',
+            dataType: 'json',   //服务器返回json格式数据
+            type: 'get',        //HTTP请求类型
+            timeout: 5000,      //超时时间设置为5秒；
+            success: function (data) {
+                //给一个默认值（‘请选择’）
+                var opt = '';
+                //获取返回的数据
+                var value = data.list;
+                //循环遍历
+                for (var i in value) {
+                    if (value.hasOwnProperty(i)) {
+                        if (Number(value[i].id) === Number(newBook.fkPublisherid)) {
+                            opt += '<option value = "' + value[i].id + '">' + value[i].name + '</option>'
+                        }
+                    }
+                }
+                $("#publisher").html(opt);
+                form.render('select');//需要渲染一下
+            }
+        });
+
+    });
+</script>
+
+</body>
+</html>

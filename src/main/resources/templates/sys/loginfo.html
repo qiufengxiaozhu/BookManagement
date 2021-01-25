@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>日志管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+    <!--查询条件开始-->
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 0;">
+        <legend>查询条件</legend>
+    </fieldset>
+
+    <blockquote class="layui-elem-quote">
+        <!--条件查询表单-->
+        <form class="layui-form layui-form-pane" action="" method="post" id="searchForm" lay-filter="searchForm">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label" for="loginname">登录名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="loginname" id="loginname" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label" for="loginip">登录ip</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="loginip" id="loginip" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label" for="startTime">开始日期</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="startTime" id="startTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label" for="endTime">结束日期</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="endTime" id="endTime" placeholder="yyyy-MM-dd HH:mm:ss" readonly="readonly" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+            <!--查询表单按钮-->
+            <div class="layui-row layui-col-space1">
+                <div class="layui-col-md4">
+                    <!--占位-->
+                    <div class="grid-demo grid-demo-bg1"></div>
+                </div>
+                <div class="layui-col-md4">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-form-item" style="">
+                            <div class="layui-input-block">
+                                <button type="button" class="layui-btn layui-btn-normal" lay-submit="" lay-filter="doSearch">
+                                    <i class="layui-icon layui-icon-search"></i>
+                                    搜索
+                                </button>
+                                <button type="reset" class="layui-btn layui-btn-primary">
+                                    <i class="layui-icon layui-icon-refresh-1"></i>
+                                    重置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4">
+                    <!--占位-->
+                    <div class="grid-demo grid-demo-bg1"></div>
+                </div>
+            </div>
+        </form>
+    </blockquote>
+    <!--查询条件结束-->
+
+    <!--查询列表开始-->
+    <div>
+        <table class="layui-hide" id="loginfoTable" lay-filter="loginfoTable"></table>
+
+        <div id="toolbar" style="display: none;">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-md layui-icon layui-icon-form" lay-event="getCheckData"> 获取选中行数据</button>
+                <button class="layui-btn layui-btn-md layui-btn-normal" lay-event="getCheckLength">
+                    <img src="/resources/images/number_icon.svg" alt="选中数目"> 获取选中数目
+                </button>
+                <button class="layui-btn layui-btn-md layui-btn-warm layui-icon layui-icon-survey" lay-event="isAll"> 验证是否全选</button>
+                <button class="layui-btn layui-btn-md layui-btn-danger" lay-event="batchDelete">
+                    <img src="/resources/images/batchDelete_icon.svg" alt="批量删除"> 批量删除
+                </button>
+            </div>
+        </div>
+
+        <div id="actionbar" style="display: none;">
+            <a class="layui-btn layui-btn-danger layui-btn-sm layui-icon layui-icon-delete" lay-event="del"> 删除</a>
+        </div>
+    </div>
+    <!--查询列表结束-->
+
+    <script type="text/javascript" src="/resources/layui/layui.js"></script>
+    <script type="text/javascript">
+        layui.use(['form', 'layer', 'jquery', 'table', 'laydate'], function () {
+            var form = layui.form;
+            var layer = parent.layer === undefined ? layui.layer : top.layer;
+            var $ = layui.jquery;
+            var table = layui.table;
+            var laydate = layui.laydate;
+
+            // 初始化开始时间选择器
+            var startTime = laydate.render({
+                elem: '#startTime',
+                type: 'datetime',
+                theme: '#4d99cf',
+                istoday: true,
+                done: function (value, date) {
+                    date.month = date.month !== 1 ? date.month - 1 : (date.year--, 12);// 月份修正
+                    endTime.config.min = date;      // 开始日选好后，重置结束日的最小日期
+                    endTime.config.value = value;   // 将结束日的初始值设定为开始日
+                    $("#endTime").val(value);       // 给结束时间赋值
+                }
+            });
+
+            // 初始化结束时间选择器
+            var endTime = laydate.render({
+                elem: '#endTime',
+                type: 'datetime',
+                max: '2099-06-16 23:59:59',
+                istoday: true,
+                theme: '#4d99cf',
+                done: function (value, date) {
+                    console.log(endTime);
+                    // 如果结束时间小于开始时间，就让开始时间=结束时间
+                    var start = $("#startTime"), end = $("#endTime");
+                    if (start.val() > end.val()) {
+                        start.val(end.val());
+                    }
+                }
+            });
+
+            // 初始化日志表单数据
+            var loginfoTable = table.render({
+                elem: '#loginfoTable'
+                , url: '/loginfo/getPageLoginfo'
+                , toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+                , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                    title: '提示'
+                    , layEvent: 'LAYTABLE_TIPS'
+                    , icon: 'layui-icon-tips'
+                }]
+                , page: true  // 分页
+                , request: {
+                    pageName: 'pageNum'         //页码的参数名称，默认：page
+                    , limitName: 'pageSize'     //每页数据量的参数名，默认：limit
+                }
+                , response: {
+                    statusName: 'code'          //规定数据状态的字段名称，默认：code
+                    , statusCode: 200           //规定成功的状态码，默认：0
+                    , countName: 'total'        //规定数据总数的字段名称，默认：count
+                    , dataName: 'list'          //规定数据列表的字段名称，默认：data
+                }
+                , height: 'full-220'
+                , title: '日志信息表'
+                , cols: [ [
+                    {type: 'checkbox', fixed: 'left'}
+                    , {type: 'numbers', title: '序号', fixed: 'left'}
+                    , {field: 'loginname', title: '登录用户', width: '30%'}
+                    , {field: 'loginip', title: '登录ip', width: '30%'}
+                    , {field: 'logintime', title: '登录时间', width: '20%', sort: true}
+                    , {fixed: 'right', title: '操作', toolbar: '#actionbar', width: 150}
+                ] ]
+
+            });
+
+            //模糊查询
+            form.on("submit(doSearch)",function(data){
+                loginfoTable.reload({
+                    where:data.field,
+                    page:{
+                        curr:1
+                    }
+                });
+                return false;
+            });
+
+            //监听头部工具栏事件
+            table.on('toolbar(loginfoTable)', function(obj){
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch(obj.event){
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：'+ data.length + ' 个');
+                        break;
+                    case 'isAll':
+                        layer.msg(checkStatus.isAll ? '全选': '未全选');
+                        break;
+                    // 自定义头工具栏右侧图标 - 提示
+                    case 'LAYTABLE_TIPS':
+                        layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                        break;
+                    // 批量删除
+                    case 'batchDelete':
+                        var data = obj.data; //获得当前行数据
+                        batchDelete(data);
+                        break;
+                }
+            });
+
+            //监听行工具事件
+            table.on('tool(loginfoTable)', function(obj){
+                var data = obj.data;
+                switch (obj.event) {
+                    case 'del':
+                        deleteLoginfo(data);
+                        break;
+                }
+            });
+
+            // 批量删除
+            function batchDelete(data) {
+                //得到选中行
+                var checkStatus = table.checkStatus('loginfoTable');
+                var dataLength = checkStatus.data.length;
+                if (dataLength > 0) {
+                    layer.confirm('你确定要删除这些数据吗?', {icon: 3, title: '提示'}, function (index) {
+                        var data = checkStatus.data; //获取选中行的数据
+                        var ids = "";
+                        $.each(data, function (index, item) {
+                            if (index === 0) {
+                                ids += "ids=" + item.id;
+                            } else {
+                                ids += "&ids=" + item.id;
+                            }
+                        })
+                        $.post("/loginfo/batchDeleteLoginfo", ids, function (res) {
+                            console.log("批量删除返回数据: ", res)
+                            if (res.code === 200) {
+                                loginfoTable.reload();
+                            }
+                            layer.msg(res.msg);
+                        })
+                        layer.close(index);
+                    });
+
+                } else {
+                    layer.msg("请选中操作行")
+                }
+            }
+
+            // 单个删除
+            function deleteLoginfo(data) {
+                layer.confirm('你确定要删除这条数据吗? [' + JSON.stringify(data.loginname) + ']', {icon: 3, title: '提示'}, function (index) {
+                    $.post("/loginfo/deleteLoginfo", {id: data.id}, function (res) {
+                        if (res.code === 200) {
+                            loginfoTable.reload();
+                        }
+                        layer.msg(res.msg);
+                    })
+                    layer.close(index);
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>

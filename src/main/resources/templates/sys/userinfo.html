@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8">
+	<title>个人资料</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" href="/resources/layui/css/layui.css" media="all"/>
+	<link rel="stylesheet" href="/resources/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+
+<blockquote class="layui-elem-quote">个人资料</blockquote>
+<!--用户信息  开始-->
+<form class="layui-form layui-row" action="" method="post" id="dataFrm" lay-filter="dataFrm" name="dataFrm">
+	<div class="layui-col-md3 layui-col-xs12 user_right">
+		<div class="layui-upload-list">
+			<input type="hidden" name="src" id="imageSrc" >
+			<img class="layui-upload-img layui-circle userFaceBtn userAvatar " id="userFace" >
+			<p id="imageText"></p>
+		</div>
+		<center>
+			<button type="button" class="layui-btn layui-btn-primary userFaceBtn" id="userImage">
+				<i class="layui-icon">&#xe67c;</i> 用户头像</button>
+			<button type="button" class="layui-btn layui-btn-primary userFaceBtn" id="uploadImage">
+				<i class="layui-icon">&#xe67c;</i> 上传头像</button>
+		</center>
+		<p>如果不上传头像，则会生成一个默认头像</p>
+	</div>
+	<div class="layui-col-md6 layui-col-xs12">
+		<div class="layui-form-item">
+			<label class="layui-form-label" for="name">真实姓名</label>
+			<div class="layui-input-block">
+				<input type="hidden" name="id">
+				<input type="text" name="name" id="name" placeholder="请输入真实姓名" lay-verify="required" autocomplete="off" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" for="loginname">登录名</label>
+			<div class="layui-input-block">
+				<input type="text" name="loginname" id="loginname" required lay-verify="required" placeholder="请输入登录名" autocomplete="off" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item" pane="">
+			<label class="layui-form-label">性别</label>
+			<div class="layui-input-inline">
+				<input type="radio" name="sex" value="0" title="男" checked="">
+				<input type="radio" name="sex" value="1" title="女">
+			</div>
+		</div>
+		<div class="layui-form-item" pane="">
+			<label class="layui-form-label">角色</label>
+			<div class="layui-input-inline">
+				<input type="radio" name="type" value="0" title="管理员" >
+				<input type="radio" name="type" value="1" title="普通用户" checked="">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" for="tel">手机号码</label>
+			<div class="layui-input-block">
+				<input type="tel" name="tel" id="tel" placeholder="请输入手机号码" lay-verify="phone" class="layui-input">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" for="grade">年级</label>
+			<div class="layui-input-block">
+				<select name="fkGradeid" id="grade" lay-verify="required">
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label" for="major">专业</label>
+			<div class="layui-input-block">
+				<select name="fkMajorid" id="major" lay-verify="required">
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button type="button" class="layui-btn" id="doUpdate">
+					<span class="layui-icon layui-icon-edit"></span> 修改
+				</button>
+				<div class="layui-input-inline" style="display: none" id="btnGroup">
+					<button type="button" class="layui-btn" lay-submit="" lay-filter="addUser" id="doSubmit">
+						<span class="layui-icon layui-icon-ok"></span> 提交
+					</button>
+					<button type="button" class="layui-btn layui-btn-warm" id="doCancel">
+						<span class="layui-icon layui-icon-return"></span> 返回
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+<!--用户信息  结束-->
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+<script type="text/javascript">
+	layui.use(['form', 'layer', 'jquery', 'table', 'upload'], function () {
+		var form = layui.form;
+		var layer = layui.layer;
+		var $ = layui.jquery;
+		var upload = layui.upload;
+
+		// 通用jquery工具方法
+		$.extend({
+			/* 把一个java对象转换成json对象 */
+			"parseJavaToJSON": function (str) {
+				var strArr_1 = str.split("(");
+				var strArr_2 = strArr_1[1].split(")");
+				var strArr_3 = strArr_2[0].split(", ");
+				var searchJSON = {};
+				$.each(strArr_3, function (index, item) {
+					var newItem = item.split("=");
+					searchJSON[newItem[0]] = decodeURIComponent(newItem[1]);
+				});
+				return searchJSON;
+			},
+			/* 把一个get参数形式字符串转换成json对象 */
+			"parseJSON": function (str) {
+				var strArr = str.split("&");
+				var searchJSON = {};
+				$.each(strArr, function (index, item) {
+					var newItem = item.split("=");
+					searchJSON[newItem[0]] = decodeURIComponent(newItem[1]);
+				});
+				return searchJSON;
+			}
+		});
+
+		// 获取当前登录用户名
+		var user = $.parseJavaToJSON('[[${session.user}]]');
+		console.log("用户信息：", '[[${session.user}]]');
+		console.log("用户信息：", user);	// 把一个java对象转换成json对象，
+		// console.log("用户信息：", $.parseJSON(user));		// 把一个get参数形式字符串转换成json对象
+		// console.log("用户信息：", $.param(user));			// 把一个json对象转化为get参数形式字符串
+		// console.log("用户信息：", JSON.stringify(user));	// 把一个json对象转换成json字符串，
+		// console.log("用户信息：", JSON.parse(user));		// 把一个json字符串解析成json对象。
+
+		// 初始化表单
+		initForm();
+
+		// 初始化表单
+		function initForm() {
+			// 装载新的数据
+			form.val("dataFrm", user);
+			// 用户头像赋值
+			$("#userFace").attr("src",user.src);
+			// 设置所有表单只读
+			$('input,select,radio',$('form[name="dataFrm"]')).attr("disabled","disabled");
+			form.render('select');//需要渲染一下
+			// 用户头像上传按钮隐藏
+			$("#uploadImage").css("display", "none");
+			$("#userImage").css("display", "block");
+		}
+
+		// 读者头像上传
+		var uploadInst = upload.render({
+			elem: '#uploadImage'
+			,url: '/upload/uploadImage' //改成您自己的上传接口
+			,size: 50 * 1024 //限制文件大小，单位 KB  50M
+			,before: function(obj){
+				//预读本地文件示例，不支持ie8
+				obj.preview(function(index, file, result){
+					// console.log("result", result)
+					$('#userFace').attr('src', result); //图片链接（base64）
+				});
+			}
+			,done: function(res){
+				//如果上传失败
+				if(res.code !== 0){
+					return layer.msg(res.msg);
+				}
+				//上传成功
+				layer.msg(res.msg);
+				console.log("路径：", res.data.src);
+				console.log("标题：", res.data.title);
+				$("#imageSrc").val(res.data.src);   // 书籍封面路径
+				// $("#demo").attr("src",res.data.src).attr("alt",res.data.title); // 完美
+			}
+			,error: function(){
+				//演示失败状态，并实现重传
+				var imageText = $('#imageText');
+				imageText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs image-reload">重试</a>');
+				imageText.find('.image-reload').on('click', function(){
+					uploadInst.upload();
+				});
+			}
+		});
+
+		// 获取专业分类的值
+		$.ajax({
+			url: '/major/getPageMajor?pageNum=1&pageSize=100',
+			dataType: 'json',   //服务器返回json格式数据
+			type: 'get',        //HTTP请求类型
+			timeout: 5000,      //超时时间设置为5秒；
+			success: function(data) {
+				// console.log(data.list);
+				//给一个默认值（‘请选择’）
+				var opt = '<option value="">请选择</option>';
+				//获取返回的数据
+				var value = data.list;
+				//循环遍历
+				for (var i in value) {
+					if (value.hasOwnProperty(i)) {
+						opt += '<option value = "' + value[i].id + '">' + value[i].major + '</option>';
+					}
+				}
+				$("#major").html(opt).val(user.fkMajorid);
+				form.render('select');//需要渲染一下
+			}
+		});
+
+		// 获取年级的值
+		$.ajax({
+			url: '/grade/getPageGrade?pageNum=1&pageSize=100',
+			dataType: 'json',   //服务器返回json格式数据
+			type: 'get',        //HTTP请求类型
+			timeout: 5000,      //超时时间设置为5秒；
+			success: function(data) {
+				//给一个默认值（‘请选择’）
+				var opt = '<option value="" selected="">请选择</option>';
+				//获取返回的数据
+				var value = data.list;
+				//循环遍历
+				for (var i in value) {
+					if (value.hasOwnProperty(i)) {
+						opt += '<option value = "' + value[i].id + '">' + value[i].grade + '</option>';
+					}
+				}
+				$("#grade").html(opt).val(user.fkGradeid);
+				form.render('select');//需要渲染一下
+			}
+		});
+
+		// 监听【真实姓名】的值改变事件
+		$('#name').bind('input propertychange', function () {
+
+			// 获取 真实姓名 的值
+			var name = $("#name").val();
+			console.log(name);
+			$.get('/user/changeChineseToPinyin?loginname='+name,function (res) {
+				if (res.code === 200) {
+					$("#loginname").val(res.data.loginname);
+				} else {
+					layer.msg(res.msg);
+				}
+			})
+		});
+
+		// 提交事件
+		form.on('submit(addUser)', function () {
+
+			// 序列化表单内容
+			var data = $("#dataFrm").serialize();
+			console.log("新增读者提交内容：", data);
+			// 判断是否可以提交
+			var success = false;
+
+			// 判断用户名是否重复
+			$.ajax({
+				type: "get",
+				url: "/user/checkLoginame?" + data,
+				datatype: "json",
+				async: false,
+				success: function (response) {
+					if (response.code !== 200) {
+						layer.alert(response.msg, {
+							icon: 5,
+							title: "提示"
+						});
+						success = true;
+					}
+				}
+			});
+			if (success) {
+				return false;
+			}
+
+			// 判断手机号是否重复
+			$.ajax({
+				type: "get",
+				url: "/user/checkTel?" + data,
+				datatype: "json",
+				async: false,
+				success: function (response) {
+					if (response.code !== 200) {
+						layer.alert(response.msg, {
+							icon: 5,
+							title: "提示"
+						});
+						success = true;
+					}
+				}
+			});
+			if (success) {
+				return false;
+			}
+
+			// 表单提交
+			$.post('/user/updateUser', data, function (res) {
+
+				layer.msg(res.msg);
+			});
+
+			return false;
+		})
+
+		// 点击修改表单事件
+		$("#doUpdate").click(function () {
+			// 设置所有表单为可编辑
+			$('input,select,radio',$('form[name="dataFrm"]')).removeAttr("disabled");
+			form.render('select');//需要渲染一下
+			// 提交按钮可见
+			$("#btnGroup").css("display","block");
+			$("#doUpdate").css("display","none");
+			// 用户头像上传按钮隐藏
+			$("#uploadImage").css("display", "block");
+			$("#userImage").css("display", "none");
+		})
+
+		// 点击返回表单事件
+		$("#doCancel").click(function () {
+			// 设置所有表单为只读
+			$('input,select,radio',$('form[name="dataFrm"]')).attr("disabled", "disabled");
+			form.render('select');//需要渲染一下
+			// 提交按钮可见
+			$("#btnGroup").css("display","none");
+			$("#doUpdate").css("display","block");
+			// 用户头像上传按钮隐藏
+			$("#uploadImage").css("display", "none");
+			$("#userImage").css("display", "block");
+			window.location.reload(); //刷新当前页面.
+		})
+
+		// 点击用户头像事件
+		$("#userImage").click(function () {
+			layer.msg("想要更换头像请点击【修改】按钮。");
+		})
+
+	});
+</script>
+
+</body>
+</html>
