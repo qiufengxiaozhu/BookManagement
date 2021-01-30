@@ -36,10 +36,10 @@ public class SwaggerConfig {
     private ApiInfo webApiInfo(){
 
         return new ApiInfoBuilder()
-                .title("仓库管理系统 API文档")
-                .description("本文档描述了仓库管理系统接口定义")
+                .title("图书管理系统 API文档")
+                .description("本文档描述了图书管理系统接口定义")
                 .version("1.0")
-                .contact(new Contact("java", "http://atguigu.com", "1123@qq.com"))
+                .contact(new Contact("java", "http://www.baidu.com", "1123@qq.com"))
                 .build();
     }
 }

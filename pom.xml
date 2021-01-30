@@ -46,11 +46,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <!--热部署-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
+            <!--运行时生效-->
             <scope>runtime</scope>
+            <!--其他项目继承我这个项目，依赖不会传递-->
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -204,10 +206,10 @@
             <artifactId>spring-boot-test</artifactId>
         </dependency>
 
-
     </dependencies>
 
     <build>
+        <!--插件包 这个插件会把pom文件中用到的jar包都打包好，不然的话不会打包额外的jar包-->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
